@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>İstanbul Baraj Doluluk Oranları (2015-2025)</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1e5799 0%, #207cca 51%, #2989d8 100%);
+            color: #333;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            color: #1e5799;
+            margin-bottom: 10px;
+            font-size: 2.2rem;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 1.1rem;
+        }
+        
+        .charts-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 25px;
+        }
+        
+        .chart-card {
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .chart-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .chart-title {
+            color: #1e5799;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            font-size: 1.4rem;
+        }
+        
+        .chart-wrapper {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 30px;
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .data-table th {
+            background-color: #1e5799;
+            color: white;
+            padding: 12px 15px;
+            text-align: left;
+        }
+        
+        .data-table td {
+            padding: 10px 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .data-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        .data-table tr:hover {
+            background-color: #e9f2fa;
+        }
+        
+        .low-percentage {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        
+        .high-percentage {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 15px;
+            color: white;
+            font-size: 0.9rem;
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-weight: bold;
+            color: #1e5799;
+        }
+        
+        .tab.active {
+            background-color: #1e5799;
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        @media (min-width: 768px) {
+            .charts-container {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .full-width {
+                grid-column: 1 / -1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>İstanbul Baraj Doluluk Oranları</h1>
+            <p class="subtitle">2015 - 2025 Yılları Arası Haziran Ayı Doluluk Oranları ve Grafikler</p>
+        </header>
+        
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('charts')">Grafikler</div>
+            <div class="tab" onclick="switchTab('data')">Veri Tablosu</div>
+            <div class="tab" onclick="switchTab('info')">Bilgiler</div>
+        </div>
+        
+        <div id="charts-tab" class="tab-content active">
+            <div class="charts-container">
+                <div class="chart-card full-width">
+                    <h2 class="chart-title">Yıllara Göre Baraj Doluluk Oranları (Haziran)</h2>
+                    <div class="chart-wrapper">
+                        <canvas id="lineChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <h2 class="chart-title">Son 5 Yılın Karşılaştırması</h2>
+                    <div class="chart-wrapper">
+                        <canvas id="barChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <h2 class="chart-title">2025 Yılı Mevsimsel Değişim</h2>
+                    <div class="chart-wrapper">
+                        <canvas id="areaChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="data-tab" class="tab-content">
+            <div class="chart-card">
+                <h2 class="chart-title">İstanbul Baraj Doluluk Oranları Veri Tablosu</h2>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Yıl</th>
+                            <th>1 Nisan</th>
+                            <th>21 Haziran</th>
+                            <th>9 Kasım</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>2015</td>
+                            <td class="high-percentage">94.66%</td>
+                            <td class="high-percentage">84.29%</td>
+                            <td>67.79%</td>
+                        </tr>
+                        <tr>
+                            <td>2016</td>
+                            <td class="high-percentage">87.56%</td>
+                            <td>67.68%</td>
+                            <td>36.69%</td>
+                        </tr>
+                        <tr>
+                            <td>2017</td>
+                            <td class="high-percentage">88.89%</td>
+                            <td>74.52%</td>
+                            <td>56.20%</td>
+                        </tr>
+                        <tr>
+                            <td>2018</td>
+                            <td class="high-percentage">90.04%</td>
+                            <td>67.50%</td>
+                            <td>48.25%</td>
+                        </tr>
+                        <tr>
+                            <td>2019</td>
+                            <td class="high-percentage">93.70%</td>
+                            <td class="high-percentage">90.89%</td>
+                            <td>40.35%</td>
+                        </tr>
+                        <tr>
+                            <td>2020</td>
+                            <td>64.59%</td>
+                            <td>52.93%</td>
+                            <td>28.65%</td>
+                        </tr>
+                        <tr>
+                            <td>2021</td>
+                            <td>73.18%</td>
+                            <td class="low-percentage">29.48%</td>
+                            <td>43.96%</td>
+                        </tr>
+                        <tr>
+                            <td>2022</td>
+                            <td class="high-percentage">88.84%</td>
+                            <td>52.48%</td>
+                            <td>38.40%</td>
+                        </tr>
+                        <tr>
+                            <td>2023</td>
+                            <td class="low-percentage">39.59%</td>
+                            <td class="low-percentage">30.82%</td>
+                            <td class="low-percentage">16.77%</td>
+                        </tr>
+                        <tr>
+                            <td>2024</td>
+                            <td class="high-percentage">81.85%</td>
+                            <td>58.91%</td>
+                            <td>29.70%</td>
+                        </tr>
+                        <tr>
+                            <td>2025</td>
+                            <td class="high-percentage">80.15%</td>
+                            <td>50.49%</td>
+                            <td class="low-percentage">21.87%</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div id="info-tab" class="tab-content">
+            <div class="chart-card">
+                <h2 class="chart-title">İstanbul Barajları Hakkında Bilgiler</h2>
+                <div style="padding: 15px; line-height: 1.6;">
+                    <h3 style="color: #1e5799; margin-bottom: 10px;">Veri Kaynağı</h3>
+                    <p>Bu grafiklerde kullanılan veriler İstanbul Su ve Kanalizasyon İdaresi (İSKİ) tarafından sağlanan resmi verilerden alınmıştır.</p>
+                    
+                    <h3 style="color: #1e5799; margin: 20px 0 10px;">Önemli Noktalar</h3>
+                    <ul style="padding-left: 20px;">
+                        <li>2023 yılı, son 10 yılın en düşük baraj doluluk oranlarına sahne olmuştur.</li>
+                        <li>2019 yılı Haziran ayında baraj doluluk oranı %90.89 ile son yılların en yüksek seviyesine ulaşmıştır.</li>
+                        <li>2025 yılı verileri, yılın ilerleyen aylarında önemli ölçüde düşüş göstermiştir.</li>
+                        <li>Baraj doluluk oranları genellikle kış ve ilkbahar aylarında yükselmekte, yaz ve sonbahar aylarında düşmektedir.</li>
+                    </ul>
+                    
+                    <h3 style="color: #1e5799; margin: 20px 0 10px;">İstanbul'un Önemli Barajları</h3>
+                    <p>İstanbul'un su ihtiyacını karşılayan başlıca barajlar şunlardır: Ömerli, Terkos, Darlık, Sazlıdere, Alibey, Büyükçekmece, Elmalı, Kazandere ve Pabuçdere.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>© 2025 İstanbul Baraj Doluluk Oranları | Veri Kaynağı: İSKİ</p>
+        </div>
+    </div>
+
+    <script>
+        // Tab geçiş işlevi
+        function switchTab(tabName) {
+            // Tüm tab içeriklerini gizle
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Tüm tab butonlarını normal yap
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Seçilen tab içeriğini göster
+            document.getElementById(tabName + '-tab').classList.add('active');
+            
+            // Seçilen tab butonunu aktif yap
+            event.currentTarget.classList.add('active');
+        }
+        
+        // Sayfa yüklendiğinde grafikleri oluştur
+        document.addEventListener('DOMContentLoaded', function() {
+            // Çizgi Grafiği
+            const lineCtx = document.getElementById('lineChart').getContext('2d');
+            const lineChart = new Chart(lineCtx, {
+                type: 'line',
+                data: {
+                    labels: ['2015', '2016', '2017', '2018', '2019', '2020', '2021', '2022', '2023', '2024', '2025'],
+                    datasets: [{
+                        label: 'Haziran Ayı Doluluk Oranı (%)',
+                        data: [84.29, 67.68, 74.52, 67.5, 90.89, 52.93, 29.48, 52.48, 30.82, 58.91, 50.49],
+                        borderColor: '#1e5799',
+                        backgroundColor: 'rgba(30, 87, 153, 0.1)',
+                        borderWidth: 3,
+                        tension: 0.2,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Yıllara Göre Haziran Ayı Baraj Doluluk Oranları'
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Doluluk Oranı (%)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Yıl'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Çubuk Grafik
+            const barCtx = document.getElementById('barChart').getContext('2d');
+            const barChart = new Chart(barCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['2021', '2022', '2023', '2024', '2025'],
+                    datasets: [{
+                        label: 'Haziran Doluluk Oranı (%)',
+                        data: [29.48, 52.48, 30.82, 58.91, 50.49],
+                        backgroundColor: [
+                            'rgba(231, 76, 60, 0.7)',
+                            'rgba(52, 152, 219, 0.7)',
+                            'rgba(231, 76, 60, 0.7)',
+                            'rgba(46, 204, 113, 0.7)',
+                            'rgba(52, 152, 219, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgb(231, 76, 60)',
+                            'rgb(52, 152, 219)',
+                            'rgb(231, 76, 60)',
+                            'rgb(46, 204, 113)',
+                            'rgb(52, 152, 219)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Doluluk Oranı (%)'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Alan Grafiği
+            const areaCtx = document.getElementById('areaChart').getContext('2d');
+            const areaChart = new Chart(areaCtx, {
+                type: 'line',
+                data: {
+                    labels: ['1 Nisan', '21 Haziran', '9 Kasım'],
+                    datasets: [{
+                        label: '2025 Yılı Doluluk Oranı (%)',
+                        data: [80.15, 50.49, 21.87],
+                        backgroundColor: 'rgba(155, 89, 182, 0.2)',
+                        borderColor: 'rgba(155, 89, 182, 1)',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Doluluk Oranı (%)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Tarih'
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
